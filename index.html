@@ -400,7 +400,7 @@
 
     <div id="inputArea" style="display:none">
       <input type="text" id="answerInput" placeholder="원소 이름 또는 기호 (예: 탄소 / C)" autocomplete="off"
-        onkeydown="if(event.key==='Enter') submitAnswer()">
+        onkeydown="if(event.key==='Enter') { if(answered) nextQuestion(); else submitAnswer(); }">
       <button id="submitBtn" onclick="submitAnswer()">확인</button>
     </div>
 
