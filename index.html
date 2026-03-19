@@ -399,7 +399,7 @@
     <div id="mcqOptions"></div>
 
     <div id="inputArea" style="display:none">
-      <input type="text" id="answerInput" placeholder="원소 이름 입력..." autocomplete="off"
+      <input type="text" id="answerInput" placeholder="원소 이름 또는 기호 (예: 탄소 / C)" autocomplete="off"
         onkeydown="if(event.key==='Enter') submitAnswer()">
       <button id="submitBtn" onclick="submitAnswer()">확인</button>
     </div>
@@ -426,26 +426,26 @@
 
 <script>
 const ELEMENTS = [
-  {num:1,  name:'수소',    period:1, group:1},
-  {num:2,  name:'헬륨',    period:1, group:18},
-  {num:3,  name:'리튬',    period:2, group:1},
-  {num:4,  name:'베릴륨',  period:2, group:2},
-  {num:5,  name:'붕소',    period:2, group:13},
-  {num:6,  name:'탄소',    period:2, group:14},
-  {num:7,  name:'질소',    period:2, group:15},
-  {num:8,  name:'산소',    period:2, group:16},
-  {num:9,  name:'플루오린',period:2, group:17},
-  {num:10, name:'네온',    period:2, group:18},
-  {num:11, name:'나트륨',  period:3, group:1},
-  {num:12, name:'마그네슘',period:3, group:2},
-  {num:13, name:'알루미늄',period:3, group:13},
-  {num:14, name:'규소',    period:3, group:14},
-  {num:15, name:'인',      period:3, group:15},
-  {num:16, name:'황',      period:3, group:16},
-  {num:17, name:'염소',    period:3, group:17},
-  {num:18, name:'아르곤',  period:3, group:18},
-  {num:19, name:'칼륨',    period:4, group:1},
-  {num:20, name:'칼슘',    period:4, group:2},
+  {num:1,  name:'수소',    symbol:'H',  period:1, group:1},
+  {num:2,  name:'헬륨',    symbol:'He', period:1, group:18},
+  {num:3,  name:'리튬',    symbol:'Li', period:2, group:1},
+  {num:4,  name:'베릴륨',  symbol:'Be', period:2, group:2},
+  {num:5,  name:'붕소',    symbol:'B',  period:2, group:13},
+  {num:6,  name:'탄소',    symbol:'C',  period:2, group:14},
+  {num:7,  name:'질소',    symbol:'N',  period:2, group:15},
+  {num:8,  name:'산소',    symbol:'O',  period:2, group:16},
+  {num:9,  name:'플루오린',symbol:'F',  period:2, group:17},
+  {num:10, name:'네온',    symbol:'Ne', period:2, group:18},
+  {num:11, name:'나트륨',  symbol:'Na', period:3, group:1},
+  {num:12, name:'마그네슘',symbol:'Mg', period:3, group:2},
+  {num:13, name:'알루미늄',symbol:'Al', period:3, group:13},
+  {num:14, name:'규소',    symbol:'Si', period:3, group:14},
+  {num:15, name:'인',      symbol:'P',  period:3, group:15},
+  {num:16, name:'황',      symbol:'S',  period:3, group:16},
+  {num:17, name:'염소',    symbol:'Cl', period:3, group:17},
+  {num:18, name:'아르곤',  symbol:'Ar', period:3, group:18},
+  {num:19, name:'칼륨',    symbol:'K',  period:4, group:1},
+  {num:20, name:'칼슘',    symbol:'Ca', period:4, group:2},
 ];
 
 const TOTAL_Q = 10;
@@ -503,11 +503,11 @@ function renderQuestion() {
   if (mode === 'number') {
     document.getElementById('qLabel').textContent = '원자번호';
     document.getElementById('qMain').textContent = q.num;
-    document.getElementById('qSub').textContent = '이 원소의 이름은?';
+    document.getElementById('qSub').textContent = '이름 또는 원소기호로 답하세요';
   } else {
     document.getElementById('qLabel').textContent = '주기 · 족';
     document.getElementById('qMain').textContent = `${q.period}주기 ${q.group}족`;
-    document.getElementById('qSub').textContent = '이 원소의 이름은?';
+    document.getElementById('qSub').textContent = '이름 또는 원소기호로 답하세요';
   }
 
   if (answerType === 'mcq') {
@@ -552,10 +552,10 @@ function checkMCQ(btn, chosen, correct) {
   if (chosen === correct) {
     score++;
     btn.classList.add('correct');
-    showFeedback(true, correct);
+    showFeedback(true, correct, questions[current].symbol);
   } else {
     btn.classList.add('wrong');
-    showFeedback(false, correct);
+    showFeedback(false, correct, questions[current].symbol);
   }
   document.getElementById('scoreDisp').textContent = score;
   document.getElementById('nextBtn').style.display = 'block';
@@ -566,33 +566,34 @@ function submitAnswer() {
   const inp = document.getElementById('answerInput');
   const val = inp.value.trim();
   if (!val) return;
-  const correct = questions[current].name;
+  const q = questions[current];
+  const isCorrect = val === q.name || val.toLowerCase() === q.symbol.toLowerCase();
   answered = true;
   inp.disabled = true;
   document.getElementById('submitBtn').disabled = true;
 
-  if (val === correct) {
+  if (isCorrect) {
     inp.classList.add('correct');
     score++;
-    showFeedback(true, correct);
+    showFeedback(true, q.name, q.symbol);
   } else {
     inp.classList.add('wrong');
     inp.classList.add('shake');
-    showFeedback(false, correct);
+    showFeedback(false, q.name, q.symbol);
   }
   document.getElementById('scoreDisp').textContent = score;
   document.getElementById('nextBtn').style.display = 'block';
 }
 
-function showFeedback(isCorrect, correct) {
+function showFeedback(isCorrect, name, symbol) {
   const fb = document.getElementById('feedback');
   fb.style.display = 'block';
   if (isCorrect) {
     fb.className = 'correct';
-    fb.textContent = '✅ 정답입니다!';
+    fb.textContent = `✅ 정답입니다! (${name} / ${symbol})`;
   } else {
     fb.className = 'wrong';
-    fb.textContent = `❌ 오답! 정답은 "${correct}" 입니다.`;
+    fb.textContent = `❌ 오답! 정답은 "${name}" (${symbol}) 입니다.`;
   }
 }
 
