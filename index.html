@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>원소 기호 퀴즈</title>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a12;
+    --card: #13131f;
+    --card2: #1a1a2e;
+    --accent: #7c3aed;
+    --accent2: #06b6d4;
+    --accent3: #f59e0b;
+    --correct: #10b981;
+    --wrong: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --border: rgba(124,58,237,0.25);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Nanum Gothic', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 60px;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content:'';
+    position:fixed; top:0; left:0; right:0; bottom:0;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(124,58,237,0.13) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 30% at 80% 80%, rgba(6,182,212,0.10) 0%, transparent 70%);
+    pointer-events:none; z-index:0;
+  }
+
+  .container { position:relative; z-index:1; width:100%; max-width:560px; }
+
+  h1 {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(1.4rem, 5vw, 2rem);
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: -0.03em;
+    margin-bottom: 6px;
+    background: linear-gradient(90deg, #a78bfa, #06b6d4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .subtitle {
+    text-align:center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-bottom: 28px;
+    letter-spacing: 0.05em;
+  }
+
+  /* MODE SELECT */
+  #modeScreen { display:flex; flex-direction:column; gap:16px; }
+  .mode-card {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 22px 24px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 18px;
+  }
+  .mode-card:hover {
+    border-color: var(--accent);
+    background: var(--card2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(124,58,237,0.18);
+  }
+  .mode-icon {
+    font-size: 2.2rem;
+    width: 52px; height: 52px;
+    display:flex; align-items:center; justify-content:center;
+    background: rgba(124,58,237,0.12);
+    border-radius: 12px; flex-shrink:0;
+  }
+  .mode-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 4px; }
+  .mode-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+
+  /* ANSWER TYPE SELECT */
+  #typeScreen { display:none; flex-direction:column; gap:14px; }
+  .type-btn {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 13px;
+    padding: 18px 22px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align:left;
+    display:flex; align-items:center; gap:14px;
+  }
+  .type-btn:hover {
+    border-color: var(--accent2);
+    background: var(--card2);
+    transform: translateY(-2px);
+  }
+  .type-icon { font-size:1.5rem; }
+  .type-title { font-size: 1rem; font-weight: 800; }
+  .type-sub { font-size: 0.8rem; color: var(--muted); }
+
+  /* QUIZ SCREEN */
+  #quizScreen { display:none; flex-direction:column; gap:0; }
+
+  .progress-bar-wrap {
+    background: rgba(255,255,255,0.06);
+    border-radius: 99px; height: 6px; margin-bottom: 20px; overflow:hidden;
+  }
+  .progress-bar {
+    height:100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.4s ease;
+  }
+
+  .stats-row {
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom: 20px;
+  }
+  .stat-chip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 13px;
+    font-size: 0.8rem;
+    font-family: 'Space Mono', monospace;
+  }
+  .stat-chip span { color: var(--accent2); font-weight:700; }
+
+  .question-card {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 32px 24px 28px;
+    text-align: center;
+    margin-bottom: 22px;
+    position:relative; overflow:hidden;
+  }
+  .question-card::before {
+    content:'';
+    position:absolute; top:-40px; left:50%; transform:translateX(-50%);
+    width:200px; height:200px;
+    background: radial-gradient(circle, rgba(124,58,237,0.12), transparent 70%);
+    pointer-events:none;
+  }
+  .q-label {
+    font-size: 0.78rem;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .q-main {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(1.8rem, 7vw, 2.8rem);
+    font-weight: 700;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #e2e8f0, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .q-sub {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  /* MCQ OPTIONS */
+  #mcqOptions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 0;
+  }
+  .opt-btn {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 13px;
+    padding: 16px 12px;
+    cursor: pointer;
+    font-family: 'Nanum Gothic', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    transition: all 0.18s;
+    text-align: center;
+    line-height: 1.3;
+  }
+  .opt-btn:hover:not(:disabled) {
+    border-color: var(--accent2);
+    background: rgba(6,182,212,0.08);
+    transform: translateY(-1px);
+  }
+  .opt-btn.correct {
+    border-color: var(--correct) !important;
+    background: rgba(16,185,129,0.15) !important;
+    color: #6ee7b7;
+  }
+  .opt-btn.wrong {
+    border-color: var(--wrong) !important;
+    background: rgba(239,68,68,0.13) !important;
+    color: #fca5a5;
+  }
+  .opt-btn:disabled { cursor:default; }
+
+  /* INPUT TYPE */
+  #inputArea {
+    display:flex; gap:10px; margin-bottom:0;
+  }
+  #answerInput {
+    flex:1;
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-family: 'Nanum Gothic', sans-serif;
+    font-size: 1rem;
+    outline:none;
+    transition: border-color 0.18s;
+  }
+  #answerInput:focus { border-color: var(--accent); }
+  #answerInput.correct { border-color: var(--correct); background: rgba(16,185,129,0.08); }
+  #answerInput.wrong { border-color: var(--wrong); background: rgba(239,68,68,0.08); }
+  #submitBtn {
+    background: linear-gradient(135deg, var(--accent), #6d28d9);
+    border: none;
+    border-radius: 12px;
+    padding: 14px 20px;
+    color: #fff;
+    font-family: 'Nanum Gothic', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.18s;
+    white-space:nowrap;
+  }
+  #submitBtn:hover { transform:translateY(-1px); box-shadow: 0 4px 18px rgba(124,58,237,0.4); }
+
+  /* FEEDBACK */
+  #feedback {
+    margin-top: 14px;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-align:center;
+    display:none;
+  }
+  #feedback.correct { background: rgba(16,185,129,0.13); color: #6ee7b7; border:1px solid rgba(16,185,129,0.3); }
+  #feedback.wrong   { background: rgba(239,68,68,0.11); color: #fca5a5; border:1px solid rgba(239,68,68,0.3); }
+
+  #nextBtn {
+    width:100%; margin-top:14px;
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    color: var(--text);
+    font-family: 'Nanum Gothic', sans-serif;
+    font-size: 1rem; font-weight: 800;
+    cursor: pointer; display:none;
+    transition: all 0.18s;
+  }
+  #nextBtn:hover { border-color: var(--accent); background: var(--card2); }
+
+  /* RESULT SCREEN */
+  #resultScreen {
+    display:none; flex-direction:column; gap:18px; text-align:center;
+  }
+  .result-card {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 36px 24px 30px;
+  }
+  .result-emoji { font-size: 3.5rem; margin-bottom: 12px; }
+  .result-score {
+    font-family: 'Space Mono', monospace;
+    font-size: 3rem; font-weight: 700;
+    background: linear-gradient(90deg, #a78bfa, #06b6d4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .result-label { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
+  .result-msg { font-size: 1.1rem; font-weight: 700; margin-top: 16px; }
+  .result-actions { display:flex; flex-direction:column; gap:10px; }
+  .action-btn {
+    background: linear-gradient(135deg, var(--accent), #6d28d9);
+    border:none; border-radius: 13px;
+    padding: 15px; color:#fff;
+    font-family: 'Nanum Gothic', sans-serif;
+    font-size: 1rem; font-weight: 800;
+    cursor:pointer; transition: all 0.18s;
+  }
+  .action-btn:hover { transform:translateY(-1px); box-shadow: 0 6px 24px rgba(124,58,237,0.35); }
+  .action-btn.secondary {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    color: var(--text);
+  }
+  .action-btn.secondary:hover { border-color: var(--accent2); box-shadow:none; }
+
+  .back-btn {
+    background: none; border:none; color:var(--muted);
+    font-family:'Nanum Gothic',sans-serif; font-size:0.85rem;
+    cursor:pointer; margin-bottom:16px; padding:4px 0;
+    display:flex; align-items:center; gap:6px;
+    transition: color 0.15s;
+  }
+  .back-btn:hover { color: var(--text); }
+
+  @keyframes pop {
+    0%{transform:scale(0.8);opacity:0} 60%{transform:scale(1.05)} 100%{transform:scale(1);opacity:1}
+  }
+  .pop { animation: pop 0.3s ease both; }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)}
+  }
+  .shake { animation: shake 0.35s ease both; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>⚗️ 원소 퀴즈</h1>
+  <p class="subtitle">주기율표 원소 암기 트레이너 · 원소번호 1–20</p>
+
+  <!-- MODE SELECT -->
+  <div id="modeScreen">
+    <div class="mode-card" onclick="selectMode('number')">
+      <div class="mode-icon">🔢</div>
+      <div>
+        <div class="mode-title">원자번호로 외우기</div>
+        <div class="mode-desc">원자번호 1~20을 보고 원소 이름 맞추기<br>예) <b>6</b> → 탄소</div>
+      </div>
+    </div>
+    <div class="mode-card" onclick="selectMode('period')">
+      <div class="mode-icon">🗂️</div>
+      <div>
+        <div class="mode-title">주기·족으로 외우기</div>
+        <div class="mode-desc">주기와 족을 보고 원소 이름 맞추기<br>예) <b>2주기 14족</b> → 탄소</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANSWER TYPE SELECT -->
+  <div id="typeScreen">
+    <button class="back-btn" onclick="goBack('mode')">← 모드 선택으로</button>
+    <div style="margin-bottom:8px; font-weight:800; font-size:1rem;">답변 방식을 선택하세요</div>
+    <button class="type-btn" onclick="startQuiz('input')">
+      <span class="type-icon">⌨️</span>
+      <div>
+        <div class="type-title">직접 입력</div>
+        <div class="type-sub">원소 이름을 직접 타이핑해서 맞추기</div>
+      </div>
+    </button>
+    <button class="type-btn" onclick="startQuiz('mcq')">
+      <span class="type-icon">🎯</span>
+      <div>
+        <div class="type-title">4지선다</div>
+        <div class="type-sub">4개 보기 중에서 정답 고르기</div>
+      </div>
+    </button>
+  </div>
+
+  <!-- QUIZ SCREEN -->
+  <div id="quizScreen">
+    <button class="back-btn" onclick="goBack('type')">← 방식 선택으로</button>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="progressBar" style="width:0%"></div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-chip">문제 <span id="qNum">1</span> / <span id="qTotal">10</span></div>
+      <div class="stat-chip">정답 <span id="scoreDisp">0</span></div>
+    </div>
+    <div class="question-card pop" id="questionCard">
+      <div class="q-label" id="qLabel"></div>
+      <div class="q-main" id="qMain"></div>
+      <div class="q-sub" id="qSub"></div>
+    </div>
+
+    <div id="mcqOptions"></div>
+
+    <div id="inputArea" style="display:none">
+      <input type="text" id="answerInput" placeholder="원소 이름 입력..." autocomplete="off"
+        onkeydown="if(event.key==='Enter') submitAnswer()">
+      <button id="submitBtn" onclick="submitAnswer()">확인</button>
+    </div>
+
+    <div id="feedback"></div>
+    <button id="nextBtn" onclick="nextQuestion()">다음 문제 →</button>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div id="resultScreen">
+    <div class="result-card pop">
+      <div class="result-emoji" id="resultEmoji"></div>
+      <div class="result-score" id="resultScore"></div>
+      <div class="result-label" id="resultLabel"></div>
+      <div class="result-msg" id="resultMsg"></div>
+    </div>
+    <div class="result-actions">
+      <button class="action-btn" onclick="restartSame()">🔄 같은 설정으로 다시</button>
+      <button class="action-btn secondary" onclick="goBack('mode')">🏠 처음으로</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const ELEMENTS = [
+  {num:1,  name:'수소',    period:1, group:1},
+  {num:2,  name:'헬륨',    period:1, group:18},
+  {num:3,  name:'리튬',    period:2, group:1},
+  {num:4,  name:'베릴륨',  period:2, group:2},
+  {num:5,  name:'붕소',    period:2, group:13},
+  {num:6,  name:'탄소',    period:2, group:14},
+  {num:7,  name:'질소',    period:2, group:15},
+  {num:8,  name:'산소',    period:2, group:16},
+  {num:9,  name:'플루오린',period:2, group:17},
+  {num:10, name:'네온',    period:2, group:18},
+  {num:11, name:'나트륨',  period:3, group:1},
+  {num:12, name:'마그네슘',period:3, group:2},
+  {num:13, name:'알루미늄',period:3, group:13},
+  {num:14, name:'규소',    period:3, group:14},
+  {num:15, name:'인',      period:3, group:15},
+  {num:16, name:'황',      period:3, group:16},
+  {num:17, name:'염소',    period:3, group:17},
+  {num:18, name:'아르곤',  period:3, group:18},
+  {num:19, name:'칼륨',    period:4, group:1},
+  {num:20, name:'칼슘',    period:4, group:2},
+];
+
+const TOTAL_Q = 10;
+let mode, answerType, questions, current, score, answered;
+
+function show(id) {
+  ['modeScreen','typeScreen','quizScreen','resultScreen'].forEach(s => {
+    document.getElementById(s).style.display = 'none';
+  });
+  const el = document.getElementById(id);
+  el.style.display = 'flex';
+}
+
+function goBack(to) {
+  if (to === 'mode') show('modeScreen');
+  else if (to === 'type') show('typeScreen');
+}
+
+function selectMode(m) {
+  mode = m;
+  show('typeScreen');
+}
+
+function startQuiz(type) {
+  answerType = type;
+  questions = shuffle([...ELEMENTS]).slice(0, TOTAL_Q);
+  current = 0; score = 0;
+  show('quizScreen');
+  renderQuestion();
+}
+
+function shuffle(arr) {
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+
+function renderQuestion() {
+  answered = false;
+  const q = questions[current];
+  document.getElementById('qNum').textContent = current + 1;
+  document.getElementById('qTotal').textContent = TOTAL_Q;
+  document.getElementById('scoreDisp').textContent = score;
+  document.getElementById('progressBar').style.width = ((current/TOTAL_Q)*100)+'%';
+  document.getElementById('feedback').style.display = 'none';
+  document.getElementById('nextBtn').style.display = 'none';
+
+  const card = document.getElementById('questionCard');
+  card.classList.remove('pop');
+  void card.offsetWidth;
+  card.classList.add('pop');
+
+  if (mode === 'number') {
+    document.getElementById('qLabel').textContent = '원자번호';
+    document.getElementById('qMain').textContent = q.num;
+    document.getElementById('qSub').textContent = '이 원소의 이름은?';
+  } else {
+    document.getElementById('qLabel').textContent = '주기 · 족';
+    document.getElementById('qMain').textContent = `${q.period}주기 ${q.group}족`;
+    document.getElementById('qSub').textContent = '이 원소의 이름은?';
+  }
+
+  if (answerType === 'mcq') {
+    document.getElementById('mcqOptions').style.display = 'grid';
+    document.getElementById('inputArea').style.display = 'none';
+    renderMCQ(q);
+  } else {
+    document.getElementById('mcqOptions').style.display = 'none';
+    document.getElementById('inputArea').style.display = 'flex';
+    const inp = document.getElementById('answerInput');
+    inp.value = '';
+    inp.className = '';
+    inp.disabled = false;
+    document.getElementById('submitBtn').disabled = false;
+    setTimeout(()=>inp.focus(), 100);
+  }
+}
+
+function renderMCQ(q) {
+  const others = ELEMENTS.filter(e => e.name !== q.name);
+  const distractors = shuffle(others).slice(0, 3).map(e => e.name);
+  const opts = shuffle([q.name, ...distractors]);
+  const wrap = document.getElementById('mcqOptions');
+  wrap.innerHTML = '';
+  opts.forEach(name => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.textContent = name;
+    btn.onclick = () => checkMCQ(btn, name, q.name);
+    wrap.appendChild(btn);
+  });
+}
+
+function checkMCQ(btn, chosen, correct) {
+  if (answered) return;
+  answered = true;
+  const allBtns = document.querySelectorAll('.opt-btn');
+  allBtns.forEach(b => {
+    b.disabled = true;
+    if (b.textContent === correct) b.classList.add('correct');
+  });
+  if (chosen === correct) {
+    score++;
+    btn.classList.add('correct');
+    showFeedback(true, correct);
+  } else {
+    btn.classList.add('wrong');
+    showFeedback(false, correct);
+  }
+  document.getElementById('scoreDisp').textContent = score;
+  document.getElementById('nextBtn').style.display = 'block';
+}
+
+function submitAnswer() {
+  if (answered) return;
+  const inp = document.getElementById('answerInput');
+  const val = inp.value.trim();
+  if (!val) return;
+  const correct = questions[current].name;
+  answered = true;
+  inp.disabled = true;
+  document.getElementById('submitBtn').disabled = true;
+
+  if (val === correct) {
+    inp.classList.add('correct');
+    score++;
+    showFeedback(true, correct);
+  } else {
+    inp.classList.add('wrong');
+    inp.classList.add('shake');
+    showFeedback(false, correct);
+  }
+  document.getElementById('scoreDisp').textContent = score;
+  document.getElementById('nextBtn').style.display = 'block';
+}
+
+function showFeedback(isCorrect, correct) {
+  const fb = document.getElementById('feedback');
+  fb.style.display = 'block';
+  if (isCorrect) {
+    fb.className = 'correct';
+    fb.textContent = '✅ 정답입니다!';
+  } else {
+    fb.className = 'wrong';
+    fb.textContent = `❌ 오답! 정답은 "${correct}" 입니다.`;
+  }
+}
+
+function nextQuestion() {
+  current++;
+  if (current >= TOTAL_Q) {
+    showResult();
+  } else {
+    renderQuestion();
+  }
+}
+
+function showResult() {
+  show('resultScreen');
+  const pct = Math.round((score/TOTAL_Q)*100);
+  document.getElementById('resultScore').textContent = `${score} / ${TOTAL_Q}`;
+  document.getElementById('resultLabel').textContent = `정답률 ${pct}%`;
+
+  let emoji, msg;
+  if (pct === 100)      { emoji='🏆'; msg='완벽해요! 원소 마스터!'; }
+  else if (pct >= 80)   { emoji='🎉'; msg='훌륭해요! 거의 다 알고 있네요!'; }
+  else if (pct >= 60)   { emoji='👍'; msg='잘 했어요! 조금만 더 연습해요.'; }
+  else if (pct >= 40)   { emoji='📚'; msg='더 공부가 필요해요. 화이팅!'; }
+  else                  { emoji='💪'; msg='처음부터 다시 도전해봐요!'; }
+
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultMsg').textContent = msg;
+}
+
+function restartSame() {
+  startQuiz(answerType);
+}
+</script>
+</body>
+</html>
